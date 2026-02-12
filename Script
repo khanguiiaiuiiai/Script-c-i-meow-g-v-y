@@ -1,0 +1,298 @@
+--[[
+    Script: CÁI MEOW GÌ VẬY
+    Tác giả: Mèo Béo Code
+    Mô tả: Auto Farm, Auto Raid, Teleport, Speed, Gắn mèo đội nón Noel, v.v.
+    Lưu ý: Chạy bằng executor có hỗ trợ InsertService (để gắn phụ kiện)
+--]]
+
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
+-- ===== BIẾN CẤU HÌNH =====
+_G.Settings = {
+    AutoFarm = false,
+    AutoQuest = false,
+    AutoRaid = false,
+    AutoFruit = false,
+    AutoSwim = false,
+    WalkSpeed = 50,
+    JumpPower = 80,
+    ShowMenu = true,
+    CatAccessoryId = 6465129833, -- ID mèo đội nón Noel
+}
+
+local player = LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- ===== TẠO GUI MENU =====
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MeowHubGUI"
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 350, 0, 500)
+MainFrame.Position = UDim2.new(0.7, 0, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+MainFrame.BackgroundTransparency = 0.15
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- Bo góc
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainFrame
+
+-- Tiêu đề
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, 0, 0, 40)
+TitleLabel.Position = UDim2.new(0, 0, 0, 0)
+TitleLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+TitleLabel.BorderSizePixel = 0
+TitleLabel.Text = "🐱 CÁI MEOW GÌ VẬY v1.0"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 20
+TitleLabel.Parent = MainFrame
+
+local UICornerTitle = Instance.new("UICorner")
+UICornerTitle.CornerRadius = UDim.new(0, 10)
+UICornerTitle.Parent = TitleLabel
+
+-- Scroll frame chứa nút
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Size = UDim2.new(1, -20, 1, -80)
+ScrollFrame.Position = UDim2.new(0, 10, 0, 50)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 5
+ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 600)
+ScrollFrame.Parent = MainFrame
+
+local UIGridLayout = Instance.new("UIGridLayout")
+UIGridLayout.CellSize = UDim2.new(0, 150, 0, 50)
+UIGridLayout.CellPadding = UDim2.new(0, 10, 0, 10)
+UIGridLayout.Parent = ScrollFrame
+
+-- ===== HÀM TẠO NÚT =====
+local function createButton(name, color, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 150, 0, 50)
+    button.BackgroundColor3 = color
+    button.Text = name
+    button.TextColor3 = Color3.new(1,1,1)
+    button.Font = Enum.Font.GothamSemibold
+    button.TextSize = 16
+    button.BorderSizePixel = 0
+    button.AutoButtonColor = false
+    button.Parent = ScrollFrame
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = button
+
+    button.MouseButton1Click:Connect(callback)
+    return button
+end
+
+-- ===== CHỨC NĂNG =====
+
+-- 1. GẮN PHỤ KIỆN MÈO NOEL
+local function attachCatAccessory()
+    local assetId = _G.Settings.CatAccessoryId
+    local success, accessory = pcall(function()
+        return game:GetService("InsertService"):LoadAsset(assetId)
+    end)
+    if success and accessory then
+        accessory = accessory:GetChildren()[1]
+        if accessory and accessory:IsA("Accessory") then
+            local newAccessory = accessory:Clone()
+            newAccessory.Parent = character
+            humanoid:AddAccessory(newAccessory)
+            print("🎄 Meow! Đội nón Noel xinh quá!")
+        end
+    else
+        warn("❌ Không tải được phụ kiện. Kiểm tra ID hoặc InsertService.")
+    end
+end
+
+-- 2. AUTO FARM (TẤN CÔNG QUÁI GẦN NHẤT)
+local farmLoop = nil
+local function startAutoFarm()
+    if farmLoop then farmLoop:Disconnect() end
+    farmLoop = RunService.Heartbeat:Connect(function()
+        if not _G.Settings.AutoFarm then farmLoop:Disconnect() farmLoop = nil return end
+        local character = LocalPlayer.Character
+        if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+        local root = character.HumanoidRootPart
+        local nearestEnemy = nil
+        local shortestDistance = math.huge
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") then
+                if v.Humanoid.Health > 0 and v.Name ~= LocalPlayer.Name then
+                    local dist = (root.Position - v.HumanoidRootPart.Position).Magnitude
+                    if dist < shortestDistance then
+                        shortestDistance = dist
+                        nearestEnemy = v
+                    end
+                end
+            end
+        end
+        if nearestEnemy then
+            root.CFrame = nearestEnemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+            local tool = character:FindFirstChildOfClass("Tool")
+            if tool and tool:FindFirstChild("Activate") then
+                tool:Activate()
+            else
+                virtualUser:ClickButton2(Vector2.new()) -- click chuột phải
+            end
+        end
+    end)
+end
+
+-- 3. AUTO QUEST (tự động nhận/nộp quest – phiên bản đơn giản)
+-- Bạn có thể mở rộng thêm
+local function startAutoQuest()
+    print("⏳ Auto Quest đang phát triển... Sẽ sớm có meow!")
+end
+
+-- 4. AUTO RAID
+local function startAutoRaid()
+    print("⚔️ Auto Raid: Chưa cài đặt, bạn có thể yêu cầu mình viết thêm nha!")
+end
+
+-- 5. AUTO NHẶT TRÁI CÂY
+local fruitLoop = nil
+local function startAutoFruit()
+    if fruitLoop then fruitLoop:Disconnect() end
+    fruitLoop = RunService.Heartbeat:Connect(function()
+        if not _G.Settings.AutoFruit then fruitLoop:Disconnect() fruitLoop = nil return end
+        local character = LocalPlayer.Character
+        if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+        local root = character.HumanoidRootPart
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("Tool") and v:FindFirstChild("Handle") and v.Name:lower():find("fruit") then
+                local fruitPos = v.Handle.Position
+                root.CFrame = CFrame.new(fruitPos)
+                task.wait(0.3)
+                firetouchinterest(root, v.Handle, 0)
+                firetouchinterest(root, v.Handle, 1)
+                break
+            end
+        end
+    end)
+end
+
+-- 6. AUTO BƠI
+local swimLoop = nil
+local function startAutoSwim()
+    if swimLoop then swimLoop:Disconnect() end
+    swimLoop = RunService.Heartbeat:Connect(function()
+        if not _G.Settings.AutoSwim then swimLoop:Disconnect() swimLoop = nil return end
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            if character.Humanoid:GetState() == Enum.HumanoidStateType.Swimming then
+                character.HumanoidRootPart.Velocity = Vector3.new(0, 15, 0)
+            end
+        end
+    end)
+end
+
+-- 7. SET SPEED / JUMP
+local function setSpeedJump()
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChild("Humanoid") then
+        character.Humanoid.WalkSpeed = _G.Settings.WalkSpeed
+        character.Humanoid.JumpPower = _G.Settings.JumpPower
+        print("🚀 Speed:", _G.Settings.WalkSpeed, "Jump:", _G.Settings.JumpPower)
+    end
+end
+
+-- 8. TELEPORT ĐẢO CHÍNH
+local teleportIslands = {
+    {"🏝️ Start", CFrame.new(-72, 18, 1278)},
+    {"🏝️ Jungle", CFrame.new(-1633, 13, 33)},
+    {"🏝️ Pirate Village", CFrame.new(-1186, 5, 830)},
+    {"🏝️ Desert", CFrame.new(952, 16, 1445)},
+    {"🏝️ Snow", CFrame.new(1186, 27, -1393)},
+    {"🏝️ Marine Ford", CFrame.new(-4636, 12, -2673)},
+}
+
+for i, data in ipairs(teleportIslands) do
+    createButton(data[1], Color3.fromRGB(80, 120, 200), function()
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = data[2]
+            print("📡 Teleport đến", data[1])
+        end
+    end)
+end
+
+-- 9. CÁC NÚT ĐIỀU KHIỂN (BẬT/TẮT)
+local farmBtn = createButton("⚔️ Auto Farm", Color3.fromRGB(70, 130, 70), function()
+    _G.Settings.AutoFarm = not _G.Settings.AutoFarm
+    farmBtn.Text = (_G.Settings.AutoFarm and "✅" or "⚔️") .. " Auto Farm"
+    farmBtn.BackgroundColor3 = _G.Settings.AutoFarm and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(70, 130, 70)
+    if _G.Settings.AutoFarm then startAutoFarm() end
+end)
+
+local fruitBtn = createButton("🍎 Auto Fruit", Color3.fromRGB(180, 120, 50), function()
+    _G.Settings.AutoFruit = not _G.Settings.AutoFruit
+    fruitBtn.Text = (_G.Settings.AutoFruit and "✅" or "🍎") .. " Auto Fruit"
+    fruitBtn.BackgroundColor3 = _G.Settings.AutoFruit and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(180, 120, 50)
+    if _G.Settings.AutoFruit then startAutoFruit() end
+end)
+
+local swimBtn = createButton("🌊 Auto Bơi", Color3.fromRGB(50, 150, 200), function()
+    _G.Settings.AutoSwim = not _G.Settings.AutoSwim
+    swimBtn.Text = (_G.Settings.AutoSwim and "✅" or "🌊") .. " Auto Bơi"
+    swimBtn.BackgroundColor3 = _G.Settings.AutoSwim and Color3.fromRGB(40, 180, 40) or Color3.fromRGB(50, 150, 200)
+    if _G.Settings.AutoSwim then startAutoSwim() end
+end)
+
+createButton("🐱 Đội Mũ Mèo Noel", Color3.fromRGB(200, 100, 100), attachCatAccessory)
+createButton("⚡ Set Speed/Jump", Color3.fromRGB(150, 100, 200), setSpeedJump)
+
+-- Slider Speed (đơn giản hóa)
+createButton("➕ Tăng Speed", Color3.fromRGB(100, 200, 100), function()
+    _G.Settings.WalkSpeed = _G.Settings.WalkSpeed + 10
+    setSpeedJump()
+end)
+createButton("➖ Giảm Speed", Color3.fromRGB(200, 100, 100), function()
+    _G.Settings.WalkSpeed = math.max(16, _G.Settings.WalkSpeed - 10)
+    setSpeedJump()
+end)
+
+-- Nút đóng/mở menu (thu gọn)
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 40, 0, 40)
+toggleBtn.Position = UDim2.new(1, -50, 0, 10)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+toggleBtn.Text = "❌"
+toggleBtn.TextColor3 = Color3.new(1,1,1)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 20
+toggleBtn.BorderSizePixel = 0
+toggleBtn.Parent = MainFrame
+toggleBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- Bo góc cho toggle
+local cornerToggle = Instance.new("UICorner")
+cornerToggle.CornerRadius = UDim.new(0, 10)
+cornerToggle.Parent = toggleBtn
+
+-- ===== THÔNG BÁO KHỞI ĐỘNG =====
+print("🐱 Meow! Script 'CÁI MEOW GÌ VẬY' đã tải xong!")
+print("🎄 Chúc bạn Giáng sinh vui vẻ với em mèo đội nón Noel!")
+
+-- Tự gắn phụ kiện nếu muốn (có thể bỏ comment dòng dưới)
+-- task.wait(2)
+-- attachCatAccessory()

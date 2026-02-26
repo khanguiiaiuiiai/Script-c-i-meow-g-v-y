@@ -1,138 +1,50 @@
---[[
-    Script: CÁI MEOW GÌ VẬY – Bản nhẹ, chạy 100%
-    Tác giả: @tddb9812
---]]
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local VirtualUser = game:GetService("VirtualUser")
+Config = {
 
--- Settings
-_G.Settings = { WalkSpeed = 50, JumpPower = 80 }
+Team = "Marines",
 
--- GUI
-local gui = Instance.new("ScreenGui")
-gui.Name = "MeowGUI"
-gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+Configuration = {
 
-local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 380, 0, 550)
-main.Position = UDim2.new(0.7, 0, 0.2, 0)
-main.BackgroundColor3 = Color3.fromRGB(30,30,40)
-main.Draggable = true
-main.Active = true
-main.Parent = gui
-Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
+HopWhenIdle = true,
 
-local title = Instance.new("TextLabel", main)
-title.Size = UDim2.new(1,0,0,45)
-title.BackgroundColor3 = Color3.fromRGB(50,50,70)
-title.Text = "🐱 CÁI MEOW GÌ VẬY"
-title.TextColor3 = Color3.new(1,1,1)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 22
-Instance.new("UICorner", title).CornerRadius = UDim.new(0,12)
+AutoHop = true,
 
-local scroll = Instance.new("ScrollingFrame", main)
-scroll.Size = UDim2.new(1,-20,1,-95)
-scroll.Position = UDim2.new(0,10,0,55)
-scroll.BackgroundTransparency = 1
-scroll.CanvasSize = UDim2.new(0,0,0,800)
+AutoHopDelay = 60 * 60,
 
-local layout = Instance.new("UIGridLayout", scroll)
-layout.CellSize = UDim2.new(0,170,0,50)
-layout.CellPadding = UDim2.new(0,8,0,8)
+FpsBoost = false,
 
-local function btn(name, color, cb)
-    local b = Instance.new("TextButton", scroll)
-    b.Size = UDim2.new(0,170,0,50)
-    b.BackgroundColor3 = color
-    b.Text = name
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.GothamSemibold
-    b.TextSize = 15
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
-    b.MouseButton1Click:Connect(cb)
-    return b
-end
+BlackScreen = true
 
--- TELEPORT ĐẢO
-local islands = {
-    {"Sea1: Start", CFrame.new(-72,18,1278)},
-    {"Sea1: Jungle", CFrame.new(-1633,13,33)},
-    {"Sea1: Pirate", CFrame.new(-1186,5,830)},
-    {"Sea1: Desert", CFrame.new(952,16,1445)},
-    {"Sea1: Snow", CFrame.new(1186,27,-1393)},
-    {"Sea2: Mansion", CFrame.new(-12475,334,-7455)},
-    {"Sea2: Factory", CFrame.new(-4246,23,-4342)},
-    {"Sea2: Green", CFrame.new(-5537,24,-6575)},
-    {"Sea3: Port", CFrame.new(-296,27,-28354)},
-    {"Sea3: Hydra", CFrame.new(5637,610,-5466)},
-    {"Sea3: Great Tree", CFrame.new(2145,514,-4627)},
+},
+
+Items = {
+
+-- Melees
+
+AutoFullyMelees = true,
+
+-- Swords
+
+Saber = true,
+
+CursedDualKatana = true,
+
+-- Guns
+
+SoulGuitar = false,
+
+-- Upgrades
+
+RaceV2 = true
+
+},
+
+Settings = {
+
+StayInSea2UntilHaveDarkFragments = false
+
 }
-for _, v in ipairs(islands) do
-    btn(v[1], Color3.fromRGB(80,120,200), function()
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            char.HumanoidRootPart.CFrame = v[2]
-        end
-    end)
-end
 
--- Speed
-btn("➕ Tăng Speed", Color3.fromRGB(100,200,100), function()
-    _G.Settings.WalkSpeed = _G.Settings.WalkSpeed + 10
-    if LocalPlayer.Character then
-        LocalPlayer.Character.Humanoid.WalkSpeed = _G.Settings.WalkSpeed
-    end
-end)
-btn("➖ Giảm Speed", Color3.fromRGB(200,100,100), function()
-    _G.Settings.WalkSpeed = math.max(16, _G.Settings.WalkSpeed - 10)
-    if LocalPlayer.Character then
-        LocalPlayer.Character.Humanoid.WalkSpeed = _G.Settings.WalkSpeed
-    end
-end)
+}
 
--- TikTok
-btn("📱 TikTok @tddb9812", Color3.fromRGB(255,0,100), function()
-    print("✅ Theo dõi TikTok @tddb9812 nha!")
-end)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/hhl29042008-ops/script/refs/heads/main/cac"))()
 
--- Mini menu
-local mini = Instance.new("Frame", gui)
-mini.Size = UDim2.new(0,70,0,70)
-mini.Position = UDim2.new(0.95,-80,0.05,10)
-mini.BackgroundColor3 = Color3.fromRGB(30,30,40)
-mini.BackgroundTransparency = 0.2
-mini.Active = true
-mini.Draggable = true
-mini.Visible = false
-Instance.new("UICorner", mini).CornerRadius = UDim.new(0,35)
-
-local miniBtn = Instance.new("TextButton", mini)
-miniBtn.Size = UDim2.new(1,0,1,0)
-miniBtn.BackgroundTransparency = 1
-miniBtn.Text = "🐱"
-miniBtn.TextColor3 = Color3.fromRGB(255,200,100)
-miniBtn.TextSize = 45
-Instance.new("UICorner", miniBtn).CornerRadius = UDim.new(0,35)
-
--- Nút thu nhỏ trên main
-local minimize = Instance.new("TextButton", main)
-minimize.Size = UDim2.new(0,40,0,40)
-minimize.Position = UDim2.new(1,-50,0,5)
-minimize.BackgroundColor3 = Color3.fromRGB(255,150,50)
-minimize.Text = "🐱"
-minimize.TextSize = 25
-Instance.new("UICorner", minimize).CornerRadius = UDim.new(0,10)
-
-minimize.MouseButton1Click:Connect(function()
-    main.Visible = false
-    mini.Visible = true
-end)
-miniBtn.MouseButton1Click:Connect(function()
-    mini.Visible = false
-    main.Visible = true
-end)
-
-print("✅ Script Meow đã chạy! Teleport và Speed OK.")
